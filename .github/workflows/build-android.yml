@@ -35,7 +35,9 @@ jobs:
           pip install Cython==0.29.33
           pip install python-for-android==2024.1.21
           pip install buildozer==1.5.0
-          buildozer android clean  # 仅保留清理缓存命令
+          # 设置环境变量，指定p4a路径
+          echo "export P4A=$(which p4a)" >> $GITHUB_ENV
+          buildozer android clean
 
       - name: Cache Buildozer assets (SDK/NDK)
         uses: actions/cache@v3
