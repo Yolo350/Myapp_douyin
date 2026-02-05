@@ -1,0 +1,66 @@
+name: Build Android APK with Buildozer
+on:
+  push:
+    branches: [ main ]  # 推送到main分支自动打包
+  workflow_dispatch:    # 支持手动触发打包
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 基于Ubuntu 24.04环境
+    steps:
+      # 步骤1：拉取仓库代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 步骤2：配置Python环境（稳定版+无引号布尔值cache）
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4  # 选用更稳定的v4版本，适配Ubuntu 24.04
+        with:
+          python-version: '3.10'
+          cache: false  # 无引号布尔值，避免语法错误
+
+      # 步骤3：修复Ubuntu 24.04 libtinfo5依赖兼容
+      - name: Fix libtinfo5 dependency (Ubuntu 24.04 compatible)
+        run: |
+          sudo apt update
+          sudo apt install -y libtinfo6  # 安装新版替代包
+          sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5  # 创建软链接
+
+      # 步骤4：安装系统级依赖（Buildozer打包必需）
+      - name: Install system dependencies
+        run: |
+          sudo apt install -y \
+            git zip unzip openjdk-17-jdk \
+            python3-pip autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev \
+            cmake libffi-dev libssl-dev
+
+      # 步骤5：安装Buildozer及依赖（优化兼容性）
+      - name: Install Buildozer & dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel  # 升级基础工具，避免安装冲突
+          pip install Cython==0.29.33  # 固定版本，适配kivy 2.3.0
+          pip install buildozer
+          buildozer android clean  # 清理旧缓存，提升打包稳定性
+
+      # 步骤6：缓存SDK/NDK（加速后续构建）
+      - name: Cache Buildozer assets (SDK/NDK)
+        uses: actions/cache@v3
+        with:
+          path: ~/.buildozer  # 缓存大文件，减少重复下载
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            ${{ runner.os }}-buildozer-
+
+      # 步骤7：构建Android APK（延长超时，适配大文件下载）
+      - name: Build Android APK with Buildozer
+        run: |
+          buildozer -v android debug --timeout=1800  # 30分钟超时，避免下载中断
+          ls -l bin/  # 打印输出目录，确认APK生成状态
+
+      # 步骤8：上传APK产物（便于下载使用）
+      - name: Upload built APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 抖音续火花工具-Android-APK
+          path: bin/*.apk
+          retention-days: 30  # 产物保留30天
