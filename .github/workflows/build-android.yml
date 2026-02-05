@@ -14,8 +14,8 @@ jobs:
       - name: Build APK with Buildozer Docker
         uses: docker://kivy/buildozer:latest
         with:
-          entrypoint: buildozer
-          args: -v android debug --timeout=1800 --ignore-root --no-clean
+          entrypoint: bash
+          args: -c "echo y | buildozer -v android debug --timeout=1800 --no-clean"
         env:
           PWD: /app
           USER_ID: ${{ github.actor_id }}
