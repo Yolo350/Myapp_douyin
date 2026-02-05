@@ -1,30 +1,26 @@
 name: Build Android APK with Buildozer
 on:
   push:
-    branches: [ main ]  # 推送到main分支自动触发打包
-  workflow_dispatch:    # 支持手动触发打包
+    branches: [ main ]
+  workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-latest  # 基于Ubuntu 24.04环境
+    runs-on: ubuntu-latest
     steps:
-      # 步骤1：拉取仓库代码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 步骤2：配置Python环境（移除cache参数，避免格式错误）
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      # 步骤3：修复Ubuntu 24.04 libtinfo5依赖兼容
       - name: Fix libtinfo5 dependency (Ubuntu 24.04 compatible)
         run: |
           sudo apt update
           sudo apt install -y libtinfo6
           sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
 
-      # 步骤4：安装系统级依赖（Buildozer打包必需）
       - name: Install system dependencies
         run: |
           sudo apt install -y \
@@ -33,17 +29,14 @@ jobs:
             zlib1g-dev libncurses5-dev libncursesw5-dev \
             cmake libffi-dev libssl-dev
 
-      # 步骤5：安装Buildozer及核心依赖（新增python-for-android）
       - name: Install Buildozer & core dependencies
         run: |
           pip install --upgrade pip setuptools wheel
           pip install Cython==0.29.33
-          pip install python-for-android  # 安装Android打包核心依赖
+          pip install python-for-android
           pip install buildozer
-          buildozer init  # 初始化Buildozer配置，确保依赖路径正确
-          buildozer android clean  # 清理旧缓存
+          buildozer android clean  # 仅保留清理缓存的命令
 
-      # 步骤6：缓存SDK/NDK（加速后续构建）
       - name: Cache Buildozer assets (SDK/NDK)
         uses: actions/cache@v3
         with:
@@ -52,13 +45,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildozer-
 
-      # 步骤7：构建Android APK（延长超时）
       - name: Build Android APK with Buildozer
         run: |
           buildozer -v android debug --timeout=1800
           ls -l bin/
 
-      # 步骤8：上传APK产物
       - name: Upload built APK
         uses: actions/upload-artifact@v4
         with:
