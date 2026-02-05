@@ -3,6 +3,7 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -10,47 +11,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+      - name: Build APK with Buildozer Docker
+        uses: docker://kivy/buildozer:latest
         with:
-          python-version: '3.10'
-
-      - name: Fix libtinfo5 dependency (Ubuntu 24.04 compatible)
-        run: |
-          sudo apt update
-          sudo apt install -y libtinfo6
-          sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
-
-      - name: Install system dependencies
-        run: |
-          sudo apt install -y \
-            git zip unzip openjdk-17-jdk \
-            python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            cmake libffi-dev libssl-dev
-
-      - name: Install Buildozer & core dependencies
-        run: |
-          pip install --upgrade pip setuptools wheel
-          pip install Cython==0.29.33
-          pip install python-for-android==2024.1.21
-          pip install buildozer==1.5.0
-          # 设置环境变量，指定p4a路径
-          echo "export P4A=$(which p4a)" >> $GITHUB_ENV
-          buildozer android clean
-
-      - name: Cache Buildozer assets (SDK/NDK)
-        uses: actions/cache@v3
-        with:
-          path: ~/.buildozer
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-
-
-      - name: Build Android APK with Buildozer
-        run: |
-          buildozer -v android debug --timeout=1800
-          ls -l bin/
+          entrypoint: buildozer
+          args: -v android debug --timeout=1800
+        env:
+          PWD: /app
+          USER_ID: ${{ github.actor_id }}
+          GROUP_ID: ${{ github.actor_id }}
 
       - name: Upload built APK
         uses: actions/upload-artifact@v4
