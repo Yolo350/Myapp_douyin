@@ -33,10 +33,9 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           pip install Cython==0.29.33
-          pip install python-for-android==2024.1.21  # 使用日志中存在的最新版本
+          pip install python-for-android==2024.1.21
           pip install buildozer==1.5.0
-          p4a init
-          buildozer android clean
+          buildozer android clean  # 仅保留清理缓存命令
 
       - name: Cache Buildozer assets (SDK/NDK)
         uses: actions/cache@v3
