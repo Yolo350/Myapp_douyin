@@ -16,7 +16,7 @@ main.py = main.py
 version = 1.0.0
 
 # 依赖配置（最新版本+兼容性优化）
-requirements = python3,kivy==2.3.0,airtest==1.4.8,pocoui==1.0.108,python-jnius==1.4.2,requests
+requirements = python3,kivy==2.3.0,airtest==1.4.3,pocoui==1.0.92,python-jnius==1.4.2,requests
 
 # Android核心配置
 android.api = 33
