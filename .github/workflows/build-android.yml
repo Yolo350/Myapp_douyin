@@ -12,9 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Build with Buildozer (final fix)
+    - name: Build with Buildozer (final ultimate fix)
       run: |
         docker run \
+          --entrypoint /bin/sh \
           -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" \
           -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" \
           -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF" -e "GITHUB_REF_NAME" \
@@ -31,7 +32,7 @@ jobs:
           -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" \
           -v "${{ github.workspace }}":"/github/workspace" \
           kivy/buildozer:latest \
-          -c "yes | buildozer -v android debug --timeout=1800 --no-clean && chown -R 1000:1000 /github/workspace"
+          -c "cd /github/workspace && yes | buildozer -v android debug --timeout=1800 --no-clean && chown -R 1000:1000 /github/workspace"
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
