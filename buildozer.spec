@@ -15,8 +15,8 @@ main.py = main.py
 # 版本信息
 version = 1.0.0
 
-# 依赖配置（最新版本+兼容性优化）
-requirements = python3,kivy==2.3.0,airtest==1.4.3,pocoui==1.0.92,python-jnius==1.4.2,requests
+# 依赖配置（修复了 python-jnius 问题）
+requirements = python3,kivy==2.3.0,airtest==1.4.3,pocoui==1.0.92,pyjnius,requests
 
 # Android核心配置
 android.api = 33
@@ -64,6 +64,14 @@ android.accept_sdk_license = True
 # 构建类型
 release = False
 debug = True
+
+# 新增：关键修复，确保 python-for-android 正确处理 pyjnius
+p4a.source_dir = .buildozer/android/platform/python-for-android
+p4a.local_recipes = .buildozer/android/platform/python-for-android/recipes
+p4a.bootstrap = sdl2
+p4a.ndk = 25b
+p4a.api = 33
+p4a.archs = arm64-v8a,armeabi-v7a
 
 [buildozer]
 log_level = 2
