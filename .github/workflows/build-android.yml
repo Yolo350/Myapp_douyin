@@ -1,29 +1,41 @@
-name: Build Android APK with Buildozer
+name: Build Android App with Buildozer
+
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Build APK with Buildozer Docker
-        uses: docker://kivy/buildozer:latest
-        with:
-          entrypoint: bash
-          args: -c "echo y | buildozer -v android debug --timeout=1800 --no-clean"
-        env:
-          PWD: /app
-          USER_ID: ${{ github.actor_id }}
-          GROUP_ID: ${{ github.actor_id }}
+    - name: Build with Buildozer (non-root)
+      run: |
+        docker run \
+          -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" \
+          -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" \
+          -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF" -e "GITHUB_REF_NAME" \
+          -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" \
+          -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" \
+          -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" \
+          -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" \
+          -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" \
+          -e "ACTIONS_ORCHESTRATION_ID" -e "GITHUB_ACTIONS=true" -e "CI=true" \
+          --user 1000:1000 \
+          -v "/var/run/docker.sock":"/var/run/docker.sock" \
+          -v "/home/runner/work/_temp":"/github/runner_temp" \
+          -v "/home/runner/work/_temp/_github_home":"/github/home" \
+          -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" \
+          -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" \
+          -v "${{ github.workspace }}":"/github/workspace" \
+          kivy/buildozer:latest \
+          -c "echo y | buildozer -v android debug --timeout=1800 --no-clean"
 
-      - name: Upload built APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: 抖音续火花工具-Android-APK
-          path: bin/*.apk
-          retention-days: 30
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk
+        path: bin/*.apk
